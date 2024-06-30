@@ -58,7 +58,14 @@ local function isTargetVisible(target)
     return false
 end
 
--- Function to enable/disable aimbot
+-- Function to check if two players are on the same team
+local function sameTeam(player1, player2)
+    local team1 = player1.Team
+    local team2 = player2.Team
+    return team1 == team2
+end
+
+-- Function to enable/disable aimbot with team checking
 local function aimbot(enable)
     aimbotEnabled = enable
     fovCircle.Visible = enable
@@ -74,7 +81,7 @@ local function aimbot(enable)
                     if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                         local screenPoint = workspace.CurrentCamera:WorldToScreenPoint(player.Character.HumanoidRootPart.Position)
                         local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - fovCircle.Position).Magnitude
-                        if distance < shortestDistance and isTargetVisible(player.Character.HumanoidRootPart) then
+                        if distance < shortestDistance and isTargetVisible(player.Character.HumanoidRootPart) and not sameTeam(game.Players.LocalPlayer, player) then
                             closestPlayer = player
                             shortestDistance = distance
                         end
@@ -90,9 +97,9 @@ local function aimbot(enable)
     end
 end
 
--- Adding a toggle to MainTab for Aimbot
+-- Adding a toggle to MainTab for Aimbot with team check
 MainTab:AddToggle({
-    Name = "Enable Aimbot",
+    Name = "Enable Aimbot (Team Check)",
     Default = false,
     Callback = function(value)
         aimbot(value)
