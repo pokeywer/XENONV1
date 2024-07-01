@@ -1,19 +1,21 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "Xenon V1", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest", IntroText = "Welcome to Xenon V1"})
 
-local MainTab = Window:MakeTab({
+-- Create the main Xenon V1 window
+local MainWindow = OrionLib:MakeWindow({Name = "Xenon V1", HidePremium = false, SaveConfig = true, ConfigFolder = "XenonV1", IntroText = "Welcome to Xenon V1"})
+
+local MainTab = MainWindow:MakeTab({
     Name = "Main",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local GamesTab = Window:MakeTab({
+local GamesTab = MainWindow:MakeTab({
     Name = "Games🤖",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local OtherTab = Window:MakeTab({
+local OtherTab = MainWindow:MakeTab({
     Name = "Other+",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
@@ -58,19 +60,12 @@ local function isTargetVisible(target)
     return false
 end
 
--- Function to check if two players are on the same team
-local function sameTeam(player1, player2)
-    local team1 = player1.Team
-    local team2 = player2.Team
-    return team1 == team2
-end
-
 -- Function to enable/disable aimbot with team checking
-local function aimbot(enable)
+local function aimbotTeamCheck(enable)
     aimbotEnabled = enable
     fovCircle.Visible = enable
     if enable then
-        print("Aimbot enabled")
+        print("Aimbot enabled with team check")
         game:GetService("RunService").RenderStepped:Connect(function()
             updateFovCircle()
             if aimbotEnabled then
@@ -81,7 +76,39 @@ local function aimbot(enable)
                     if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                         local screenPoint = workspace.CurrentCamera:WorldToScreenPoint(player.Character.HumanoidRootPart.Position)
                         local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - fovCircle.Position).Magnitude
-                        if distance < shortestDistance and isTargetVisible(player.Character.HumanoidRootPart) and not sameTeam(game.Players.LocalPlayer, player) then
+                        if distance < shortestDistance and isTargetVisible(player.Character.HumanoidRootPart) and player.Team ~= game.Players.LocalPlayer.Team then
+                            closestPlayer = player
+                            shortestDistance = distance
+                        end
+                    end
+                end
+                if closestPlayer then
+                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, closestPlayer.Character.HumanoidRootPart.Position)
+                end
+            end
+        end)
+    else
+        print("Aimbot disabled")
+    end
+end
+
+-- Function to enable/disable aimbot without team checking
+local function aimbotNoTeamCheck(enable)
+    aimbotEnabled = enable
+    fovCircle.Visible = enable
+    if enable then
+        print("Aimbot enabled without team check")
+        game:GetService("RunService").RenderStepped:Connect(function()
+            updateFovCircle()
+            if aimbotEnabled then
+                -- Aimbot logic to target closest visible player within FOV
+                local closestPlayer = nil
+                local shortestDistance = fovCircle.Radius
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local screenPoint = workspace.CurrentCamera:WorldToScreenPoint(player.Character.HumanoidRootPart.Position)
+                        local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - fovCircle.Position).Magnitude
+                        if distance < shortestDistance and isTargetVisible(player.Character.HumanoidRootPart) then
                             closestPlayer = player
                             shortestDistance = distance
                         end
@@ -102,7 +129,16 @@ MainTab:AddToggle({
     Name = "Enable Aimbot (Team Check)",
     Default = false,
     Callback = function(value)
-        aimbot(value)
+        aimbotTeamCheck(value)
+    end    
+})
+
+-- Adding a toggle to MainTab for Aimbot without team check
+MainTab:AddToggle({
+    Name = "Enable Aimbot (No Team Check)",
+    Default = false,
+    Callback = function(value)
+        aimbotNoTeamCheck(value)
     end    
 })
 
@@ -132,6 +168,14 @@ MainTab:AddSlider({
 MainTab:AddLabel("Aimbot Settings")
 MainTab:AddParagraph("Instructions", "Use the slider to adjust the FOV radius. Toggle the aimbot on or off.")
 
+-- Adding a button to load ESP script
+MainTab:AddButton({
+    Name = "Enable ESP",
+    Callback = function()
+        loadstring(game:HttpGet(('https://raw.githubusercontent.com/cool83birdcarfly02six/UNIVERSALESPLTX/main/README.md'),true))()
+    end    
+})
+
 -- Adding elements to Games Tab
 GamesTab:AddParagraph("Lumber Tycoon 2", "Various scripts and utilities for Lumber Tycoon 2.")
 GamesTab:AddButton({
@@ -142,25 +186,27 @@ GamesTab:AddButton({
 })
 
 -- Adding elements to Other Tab
+OtherTab:AddParagraph("Miscellaneous", "Various other scripts and utilities.")
 OtherTab:AddButton({
-    Name = "Keyboard",
+    Name = "Dark Hub",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/advxzivhsjjdhxhsidifvsh/mobkeyboard/main/main.txt", true))()
+        loadstring(game:HttpGet("https://darkhub.xyz/remote-script.lua"))()
     end    
 })
 
 OtherTab:AddButton({
-    Name = "Ghost hub",
+    Name = "Infinity Yield",
     Callback = function()
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/main/GhostHub'))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
     end    
 })
 
 OtherTab:AddButton({
-    Name = "Hitbox op",
+    Name = "CMD-X",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Vcsk/RobloxScripts/main/HitboxExpander.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/CMD-X/CMD-X/master/Source"))()
     end    
 })
 
+-- Start the script by initializing the Orion library
 OrionLib:Init()
